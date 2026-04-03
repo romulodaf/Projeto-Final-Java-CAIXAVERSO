@@ -3,6 +3,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MapeamentoDoCSV {
 
@@ -25,16 +27,19 @@ public class MapeamentoDoCSV {
         //Cria um objeto analisador passando as transações para o construtor
         //------------------------------------------------------------------------------------------------------------------
         Analisador analisador = new Analisador(transacoes);
+        AnalisadorAssincronoDataset criadorDeArquivos = new AnalisadorAssincronoDataset(transacoes);
         //------------------------------------------------------------------------------------------------------------------
+        try (ExecutorService executor = Executors.newFixedThreadPool(2)) {
+            executor.execute(criadorDeArquivos::geraArquivosTXT);
+            System.out.println("==================================================\n   RELATÓRIO DE TRANSAÇÕES BANCÁRIAS - SUMÁRIO\n==================================================");
+            System.out.println("Quantidade total de transaões processadas: " + analisador.getQuantidadeDeTransacoes());
+            System.out.printf("Valor total movimentado: R$ %.2f\n", analisador.calcularValorTotalMovimentadoComFuture());
+            System.out.println("\n--------------------------------------------------\n" + "TOP 10 MAIORES TRANSAÇÕES:\n");
+            System.out.println(analisador.top10());
+        } catch (Exception e){
+            System.out.println("Ocorreu um erro.");
+        }
 
-
-
-        //System.out.println("==================================================\n   RELATÓRIO DE TRANSAÇÕES BANCÁRIAS - SUMÁRIO\n==================================================");
-        //System.out.println("Valor total de transaões processadas: " + analisador.getQuantidadeDeTransacoes());
-        //System.out.printf("Valor total de movimentado: R$ %.2f\n", analisador.calcularValorTotalMovimentadoComFuture());
-        //System.out.println("--------------------------------------------------\n" + "TOP 10 MAIORES TRANSAÇÕES:");
-        //analisador.top10();
-        System.out.println(analisador.saldoMedioPorProfissao());
 
     }
 }

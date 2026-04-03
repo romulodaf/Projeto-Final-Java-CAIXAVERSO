@@ -1,13 +1,17 @@
+import javax.swing.text.DateFormatter;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.chrono.ChronoLocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.TextStyle;
+import java.time.temporal.Temporal;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class Analisador {
     private List<Transaction> transacoes;
@@ -41,41 +45,29 @@ public class Analisador {
             indiceInicial = indiceFinal;
         }
     }
-    public List<Transaction> top10(){
+
+    public String top10(){
         List<Transaction> top10Transacoes = this.transacoes.stream()
                                                            .sorted(Comparator.comparing(Transaction::amount).reversed())
                                                            .limit(10)
                                                            .toList();
-        return top10Transacoes;
-    }
-
-    public String saldoMedioPorProfissao(){
-        //Busca as profissoes no arquivo
         String saida = "";
-        Map<String, List<Transaction>> agrupamentoProfissoes = this.transacoes.stream()
-                                                                              .collect(Collectors.groupingBy(Transaction::occupation));
-
-        for (String occupation: agrupamentoProfissoes.keySet()){
-            double media = agrupamentoProfissoes.get(occupation)
-                                                    .stream()
-                                                    .map(Transaction::balance)
-                                                    .collect(Collectors.averagingDouble(BigDecimal::doubleValue));
-            saida += "%s: R$ %,.2f\n".formatted(occupation, media);
+        int cont = 1;
+        for(Transaction transacao : top10Transacoes){
+            saida += cont + ": ";
+            saida += "ID: " + transacao.transactionId() + " | ";
+            saida += "Valor: R$ %,.2f".formatted(transacao.amount()) + " | ";
+            saida += "Conta: " + transacao.accountId() + " | ";
+            saida += "Data: " + transacao.timestamp().format(Transaction.FORMATTER_SAIDA);
+            saida += "\n";
+            cont++;
         }
         return saida;
     }
 
-    public BigDecimal calcularValorTotalMovimentado(){
-        BigDecimal somaDebitos = this.transacoes.stream()
-                                                .filter(v -> v.type() == TransactionType.Debit)
-                                                .map(Transaction::amount)
-                                                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal somaCreditos = this.transacoes.stream()
-                                                .filter(v -> v.type() == TransactionType.Credit)
-                                                .map(Transaction::amount)
-                                                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        return somaCreditos.add(somaDebitos.multiply(BigDecimal.valueOf(-1L)));
-    }
+
+
+
 
     public BigDecimal calcularValorTotalMovimentadoComFuture(){
         dividirPartes();
