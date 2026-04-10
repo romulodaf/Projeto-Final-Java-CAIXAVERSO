@@ -100,12 +100,12 @@ public class AnalisadorAssincronoDataset {
                 .collect(Collectors.groupingBy(Transaction::diaDaSemanaNumero));
 
         for (int dia: agrupamentoDias.keySet().stream().sorted().toList()){
-            BigDecimal total = calcularValorTotalMovimentado();
+            BigDecimal total = calcularValorTotalMovimentado(agrupamentoDias.get(dia));
             saida += "%s: R$ %,.2f \n".formatted(DayOfWeek.of(dia).getDisplayName(TextStyle.FULL, Locale.of("pt", "br")), total.doubleValue());
         }
         return saida;
     }
-    private BigDecimal calcularValorTotalMovimentado(){
+    private BigDecimal calcularValorTotalMovimentado(List<Transaction> transacoes){
         BigDecimal somaDebitos = transacoes.stream()
                 .filter(v -> v.type() == TransactionType.Debit)
                 .map(Transaction::amount)
