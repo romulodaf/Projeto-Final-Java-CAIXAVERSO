@@ -1,5 +1,7 @@
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.DayOfWeek;
@@ -31,7 +33,7 @@ public class AnalisadorAssincronoDataset {
     private void geraArquivoDeEstatisticas(){
         String log = "--- MÉDIA DE SALDO POR PROFISSÃO ---\n";
         log += saldoMedioPorProfissao();
-        log += "\n--- VOLUME POR CANAL ---";
+        log += "\n--- VOLUME POR CANAL ---\n";
         log += transacoesPorCanal();
         log += "\n--- Valores por dia da semana ---\n";
         log += transacoesPorDiaDaSemana();
@@ -69,10 +71,12 @@ public class AnalisadorAssincronoDataset {
                 .collect(Collectors.groupingBy(Transaction::occupation));
 
         for (String occupation: agrupamentoProfissoes.keySet()){
-            double media = agrupamentoProfissoes.get(occupation)
+            int qtd = agrupamentoProfissoes.get(occupation).size();
+            BigDecimal soma = agrupamentoProfissoes.get(occupation)
                     .stream()
                     .map(Transaction::balance)
-                    .collect(Collectors.averagingDouble(BigDecimal::doubleValue));
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal media = soma.divide(BigDecimal.valueOf(qtd), RoundingMode.CEILING);
             saida += "%s: R$ %,.2f\n".formatted(occupation, media);
         }
         return saida;
